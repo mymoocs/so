@@ -1,0 +1,19 @@
+parameter a_parameter_name errors: 5
+error bla bla1
+error bla bla2
+error bla bla bla3
+error bla bla bla4
+error bla bla bla5
+some garbage line
+parameter an_other_parameter_name errors: 7
+error bla bla1
+error bla bla2
+error bla bla3
+error bla bla4
+error bla bla5
+error bla bla6
+error bla bla7
+
+some garbage line
+some garbage line
+some garbage line
