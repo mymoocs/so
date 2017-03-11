@@ -2,48 +2,58 @@
 
 module SoLog where
 
-import Data.List
+-- import Data.List
 
 type Name = String
 type Count = Int
-data LogMessage = Param Name Count
-                | Error String
-                | Unknown String
-                  deriving (Show, Eq)
+data MessageType =  Param Name Count
+                 | Error String
+                 | Unknown String
+                   deriving (Show, Eq)
 
-parseMessage :: String -> LogMessage
+parseMessage :: String -> MessageType
 parseMessage line =
     case  words line of
       ("parameter":n:_:c:_) -> Param n (read c)
       ("error":msg)         -> Error (unwords msg)
       xs                    -> Unknown $ unwords xs
 
-data LogTriple = LogTriple Name Count [LogMessage]
+data LogMessage = LogMessage Name Count [MessageType]
                deriving (Show, Eq)
 
-parse :: String -> [LogMessage]
+parse :: String -> [MessageType]
 parse = map parseMessage .  lines
 
-isError :: LogMessage -> Bool
+isError :: MessageType -> Bool
 isError (Error _) = True
 isError _ = False
 
 
-isUnknown :: LogMessage -> Bool
+isUnknown :: MessageType -> Bool
 isUnknown  (Unknown _)  = True
 isUnknown _ = False
+
 (.||.) :: (a -> Bool) -> (a -> Bool) -> (a -> Bool)
 (.||.) f g a = (f a) || (g a)
-toTriples :: [LogMessage] -> [LogTriple]
-toTriples [] = []
-toTriples (x:xs) =
+
+toLogMsg :: [MessageType] -> [LogMessage]
+toLogMsg [] = []
+toLogMsg (x:xs) =
     case x of
       Param n c ->
-          LogTriple n c (takeWhile isError xs) : toTriples (dropWhile (isError .||. isUnknown) xs)
-      _             -> toTriples $ dropWhile (isError .||. isUnknown) xs
+          LogMessage n c (takeWhile isError xs) : toLogMsg (dropWhile (isError .||. isUnknown) xs)
+      _         -> toLogMsg $ dropWhile (isError .||. isUnknown) xs
+
+
+errMsg :: [MessageType] -> [String]
+errMsg = foldr (\(Error m) acc -> m : acc) []
+
+toTriple :: [LogMessage] -> [(String, Count, [String])]
+toTriple = foldl(\acc (LogMessage n c xs) -> (n, c, errMsg xs) : acc) []
 
 
 main :: IO ()
 main = do
-       ts <- toTriples . parse <$> readFile "./so-log.txt"
+       ts <- toLogMsg . parse <$> readFile "./src/2017/so-log.txt"
+       mapM_ print (toTriple ts)
        mapM_ print ts
